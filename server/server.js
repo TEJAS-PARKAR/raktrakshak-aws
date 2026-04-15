@@ -14,7 +14,7 @@ mongoose.connect(process.env.MONGO_URI)
 // Middleware
 app.set("trust proxy", 1); // Trust Render's reverse proxy
 app.use(cors({
-  origin: ["https://raktrakshak.vercel.app", "http://localhost:5173"],
+  origin: [process.env.CLIENT_URL],
   credentials: true,
 })); // Enable CORS for frontend with credentials
 
