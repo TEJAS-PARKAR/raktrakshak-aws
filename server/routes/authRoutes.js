@@ -32,7 +32,8 @@ router.get(
     const email = profile.emails?.[0]?.value?.toLowerCase();
 
     if (!email) {
-      return res.redirect(`${process.env.CLIENT_URL}/login`);
+      const clientUrl = process.env.CLIENT_URL.replace(/\/$/, "");
+      return res.redirect(`${clientUrl}/login`);
     }
 
     const existingUser = await User.findOne({ email });
@@ -50,7 +51,8 @@ router.get(
       });
 
       res.clearCookie("googleProfile", getCookieOptions());
-      res.redirect(`${process.env.CLIENT_URL}/login-success`);
+      const clientUrl = process.env.CLIENT_URL.replace(/\/$/, "");
+      res.redirect(`${clientUrl}/login-success`);
       return;
     }
 
@@ -63,7 +65,8 @@ router.get(
     });
 
     // Redirect to register for profile completion
-    res.redirect(`${process.env.CLIENT_URL}/register`);
+    const clientUrl = process.env.CLIENT_URL.replace(/\/$/, "");
+    res.redirect(`${clientUrl}/register`);
   }
 );
 
