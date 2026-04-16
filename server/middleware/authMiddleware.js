@@ -2,7 +2,11 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
 const authenticateToken = async (req, res, next) => {
-  const token = req.cookies?.token;
+  // Accept token from Authorization Bearer header (production) or cookie (local dev)
+  const authHeader = req.headers["authorization"];
+  const token = (authHeader && authHeader.startsWith("Bearer ")
+    ? authHeader.slice(7)
+    : req.cookies?.token);
 
   if (!token) {
     return res.status(401).json({ success: false, message: "Not authenticated" });

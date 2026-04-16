@@ -45,95 +45,46 @@ router.get(
         { expiresIn: "7d" }
       );
 
-      res.cookie("token", token, {
-        ...getCookieOptions(),
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-
-      res.clearCookie("googleProfile", getCookieOptions());
+      // Pass token in URL to avoid cross-domain cookie issues between CloudFront and Amplify
       const clientUrl = process.env.CLIENT_URL.replace(/\/$/, "");
-      res.redirect(`${clientUrl}/login-success`);
+      res.redirect(`${clientUrl}/login-success?token=${token}`);
       return;
     }
 
-    // Set cookie with profile data for profile completion
-    res.clearCookie("token", getCookieOptions());
+    // New user - encode basic profile info in URL for registration page
+    const profileData = Buffer.from(JSON.stringify({
+      name: profile.displayName,
+      email: profile.emails?.[0]?.value,
+    })).toString("base64");
 
-    res.cookie("googleProfile", JSON.stringify(profile), {
-      ...getCookieOptions(),
-      maxAge: 10 * 60 * 1000, // 10 minutes
-    });
-
-    // Redirect to register for profile completion
     const clientUrl = process.env.CLIENT_URL.replace(/\/$/, "");
-    res.redirect(`${clientUrl}/register`);
+    res.redirect(`${clientUrl}/register?googleProfile=${profileData}`);
   }
 );
 
-// Server-side route to resolve user from cookie token
+// Resolve user from Authorization Bearer token or cookie
 router.get("/me", async (req, res) => {
-  const token = req.cookies?.token;
-  const googleProfile = req.cookies?.googleProfile;
+  // Accept token from Authorization header (production) or cookie (local dev)
+  const authHeader = req.headers["authorization"];
+  const token = (authHeader && authHeader.startsWith("Bearer ")
+    ? authHeader.slice(7)
+    : req.cookies?.token);
 
-  if (token) {
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.id).select("-__v");
+  if (!token) {
+    return res.status(401).json({ success: false, message: "Not authenticated" });
+  }
 
-      if (!user) {
-        if (googleProfile) {
-          const profile = JSON.parse(googleProfile);
-          return res.json({
-            success: true,
-            profile: {
-              name: profile.displayName,
-              email: profile.emails?.[0]?.value,
-              isProfileComplete: false
-            }
-          });
-        }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select("-__v");
 
-        return res.status(404).json({ success: false, message: "User not found" });
-      }
-
-      res.json({ success: true, user });
-    } catch (err) {
-      if (googleProfile) {
-        try {
-          const profile = JSON.parse(googleProfile);
-          return res.json({
-            success: true,
-            profile: {
-              name: profile.displayName,
-              email: profile.emails?.[0]?.value,
-              isProfileComplete: false
-            }
-          });
-        } catch (parseError) {
-          return res.status(400).json({ success: false, message: "Invalid profile data" });
-        }
-      }
-
-      res.status(401).json({ success: false, message: "Invalid token" });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
     }
-  } else {
-    if (googleProfile) {
-      try {
-        const profile = JSON.parse(googleProfile);
-        res.json({
-          success: true,
-          profile: {
-            name: profile.displayName,
-            email: profile.emails?.[0]?.value,
-            isProfileComplete: false
-          }
-        });
-      } catch (err) {
-        res.status(400).json({ success: false, message: "Invalid profile data" });
-      }
-    } else {
-      res.status(401).json({ success: false, message: "Not authenticated" });
-    }
+
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(401).json({ success: false, message: "Invalid token" });
   }
 });
 

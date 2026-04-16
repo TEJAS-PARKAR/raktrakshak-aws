@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useEffect } from "react";
 
 import Home from "./pages/Home";
 import Register from "./pages/Register";
@@ -13,32 +12,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import ApprovalPending from "./pages/ApprovalPending";
 import Navbar from "./components/Navbar";
 import PrivateRoute from "./components/PrivateRoute";
-import API from "./services/api";
 
 function App() {
-  useEffect(() => {
-    const syncSession = async () => {
-      try {
-        const res = await API.get("/auth/me");
-
-        if (res.data.success && res.data.user) {
-          localStorage.setItem("token", "cookie-session");
-          localStorage.setItem("user", JSON.stringify(res.data.user));
-          window.dispatchEvent(new Event("auth-updated"));
-        } else {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          window.dispatchEvent(new Event("auth-updated"));
-        }
-      } catch (error) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        window.dispatchEvent(new Event("auth-updated"));
-      }
-    };
-
-    syncSession();
-  }, []);
 
   return (
     <BrowserRouter>

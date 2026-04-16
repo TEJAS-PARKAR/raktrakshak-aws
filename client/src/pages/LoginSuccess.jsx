@@ -9,11 +9,17 @@ function LoginSuccess() {
   useEffect(() => {
     const setSession = async () => {
       try {
+        // Read token from URL ?token=xxx (set by backend after Google OAuth)
+        const urlToken = searchParams.get("token");
+        if (urlToken) {
+          localStorage.setItem("token", urlToken);
+        }
+
         const meRes = await API.get("/auth/me");
 
         if (meRes.data.success && meRes.data.user) {
-          localStorage.setItem("token", "cookie-session");
           localStorage.setItem("user", JSON.stringify(meRes.data.user));
+          window.dispatchEvent(new Event("auth-updated"));
 
           if (meRes.data.user.applicationStatus === "pending") {
             window.location.href = "/approval-pending";
