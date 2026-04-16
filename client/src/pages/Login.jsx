@@ -6,7 +6,9 @@ function Login() {
   const navigate = useNavigate();
 
   const handleGoogleLogin = () => {
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin;
+    const backendUrl = import.meta.env.VITE_BACKEND_URL
+      || "http://raktrakshak-env-1.eba-amixphqz.ap-south-1.elasticbeanstalk.com";
+    console.log("OAuth redirect to:", backendUrl);
     window.location.href = `${backendUrl}/api/auth/google`;
   };
 
