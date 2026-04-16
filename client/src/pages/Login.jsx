@@ -6,7 +6,8 @@ function Login() {
   const navigate = useNavigate();
 
   const handleGoogleLogin = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin;
+    window.location.href = `${backendUrl}/api/auth/google`;
   };
 
   return (
