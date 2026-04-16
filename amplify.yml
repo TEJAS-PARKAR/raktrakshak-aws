@@ -1,0 +1,25 @@
+version: 1
+applications:
+  - frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm ci
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: dist
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+    appRoot: client
+customRules:
+  - source: /api/<*>
+    target: http://raktrakshak-env-1.eba-amixphqz.ap-south-1.elasticbeanstalk.com/api/<*>
+    status: '200'
+  - source: '</^[^.]+$|\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json|webp)$)([^.]+$)/>'
+    target: '/index.html'
+    status: '200'
